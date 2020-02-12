@@ -360,6 +360,46 @@ pub fn get_command_output(cmd: &str) -> String {
         .unwrap_or_else(|_| String::from(""))
 }
 
+/// Extract the `filter` portion line
+/// ```
+/// use libnewsboat::utils::extract_filter;
+/// let mut filter = String::new();
+/// let mut url = String::new();
+/// extract_filter("filter:~/bin/script.sh:https://newsboat.org", &mut filter, &mut url);
+/// assert_eq!(filter, "~/bin/script.sh");
+/// assert_eq!(url, "https://newsboat.org");
+///
+/// extract_filter("https://newsboat.org", &mut filter, &mut url);
+/// assert_eq!(filter, "//newsboat.org");
+/// assert_eq!(url, "https://newsboat.org");
+///
+/// extract_filter("filter::https://newsboat.org", &mut filter, &mut url);
+/// assert_eq!(filter, "");
+/// assert_eq!(url, "https://newsboat.org");
+///
+/// extract_filter("filter:https://newsboat.org", &mut filter, &mut url);
+/// assert_eq!(filter, "https");
+/// assert_eq!(url, "//newsboat.org");
+///
+/// extract_filter("filter:foo:", &mut filter, &mut url);
+/// assert_eq!(filter, "foo");
+/// assert_eq!(url, "");
+/// ```
+pub fn extract_filter(line: &str, filter: &mut String, url: &mut String) {
+    let mut parts = line.splitn(3, ':').skip(1);
+
+    *filter = parts.next().map(String::from).unwrap_or(String::new());
+    *url = parts.next().map(String::from).unwrap_or(String::from(line));
+
+    log!(
+        Level::Debug,
+        "utils::extract_filter: {} -> filter: {} url: {}",
+        line,
+        filter,
+        url
+    );
+}
+
 // This function assumes that the user is not interested in command's output (not even errors on
 // stderr!), so it redirects everything to /dev/null.
 pub fn run_command(cmd: &str, param: &str) {
